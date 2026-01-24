@@ -48,3 +48,31 @@ It:
 -Reduces unnecessary exploration
 -Ensures correctness
 -Efficient for CSPs with strong constraints
+
+4. Simulation: Row-by-Row Placement
+Row	Column Chosen
+0	0
+1	4
+2	7
+3	5
+4	2
+5	6
+6	1
+7	3
+
+-Each placement satisfies all constraints
+-Conflicts cause backtracking automatically
+
+5. Final Chessboard Configuration
+Q . . . . . . .
+. . . . Q . . .
+. . . . . . . Q
+. . . . . Q . .
+. . Q . . . . .
+. . . . . . Q .
+. Q . . . . . .
+. . . Q . . . .
+
+Where:
+Q → Queen
+. → Empty square

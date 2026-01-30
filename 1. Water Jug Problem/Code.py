@@ -1,69 +1,36 @@
 from collections import deque
 
-# Capacities
-CAP_A = 4
-CAP_B = 3
+CAP_A, CAP_B = 4, 3
 
-# Goal test
-def is_goal(state):
-    return state[0] == 2
+def neighbors(a, b):
+    return {
+        "Fill A": (CAP_A, b),
+        "Fill B": (a, CAP_B),
+        "Empty A": (0, b),
+        "Empty B": (a, 0),
+        "Pour A → B": (a - min(a, CAP_B - b), b + min(a, CAP_B - b)),
+        "Pour B → A": (a + min(b, CAP_A - a), b - min(b, CAP_A - a))
+    }
 
-# Generate all valid next states
-def get_neighbors(state):
-    a, b = state
-    neighbors = []
-
-    # Fill operations
-    neighbors.append((CAP_A, b))   # Fill A
-    neighbors.append((a, CAP_B))   # Fill B
-
-    # Empty operations
-    neighbors.append((0, b))       # Empty A
-    neighbors.append((a, 0))       # Empty B
-
-    # Pour A -> B
-    pour = min(a, CAP_B - b)
-    neighbors.append((a - pour, b + pour))
-
-    # Pour B -> A
-    pour = min(b, CAP_A - a)
-    neighbors.append((a + pour, b - pour))
-
-    return neighbors
-
-# BFS implementation
 def bfs():
     start = (0, 0)
-    queue = deque([start])
+    queue = deque([(start, [])])
     visited = set([start])
-    parent = {start: None}
 
     while queue:
-        current = queue.popleft()
+        (a, b), path = queue.popleft()
+        input(f"\nCurrent State: A={a}, B={b}  (press Enter)")
 
-        if is_goal(current):
-            return parent, current
+        if a == 2:
+            print("\n✅ Goal Reached!")
+            for step in path:
+                print(step)
+            print(f"Final State: A={a}, B={b}")
+            return
 
-        for neighbor in get_neighbors(current):
-            if neighbor not in visited:
-                visited.add(neighbor)
-                parent[neighbor] = current
-                queue.append(neighbor)
+        for action, (na, nb) in neighbors(a, b).items():
+            if (na, nb) not in visited:
+                visited.add((na, nb))
+                queue.append(((na, nb), path + [f"{action} → ({na},{nb})"]))
 
-    return None, None
-
-# Reconstruct path
-def print_solution(parent, goal):
-    path = []
-    while goal is not None:
-        path.append(goal)
-        goal = parent[goal]
-    path.reverse()
-
-    print("Solution Path:")
-    for step in path:
-        print(step)
-
-# Run the program
-parent, goal = bfs()
-print_solution(parent, goal)
+bfs()

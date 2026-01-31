@@ -1,144 +1,106 @@
-import java.util.*;
+import javax.swing.*;
+import java.awt.*;
+import java.util.Arrays;
 
-class Node {
-    int[][] state;
-    int g, h;
-    Node parent;
+public class EightPuzzleGUI extends JFrame {
 
-    Node(int[][] state, int g, int h, Node parent) {
-        this.state = state;
-        this.g = g;
-        this.h = h;
-        this.parent = parent;
-    }
+    private JButton[][] buttons = new JButton[3][3];
 
-    int f() {
-        return g + h;
-    }
-}
-
-public class EightPuzzleAStar {
-
-    static int[][] goal = {
-        {1,2,3},
-        {4,5,6},
-        {7,8,0}
+    private int[][] state = {
+        {1, 2, 3},
+        {4, 0, 6},
+        {7, 5, 8}
     };
 
-    static int manhattan(int[][] state) {
-        int dist = 0;
+    private final int[][] goal = {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 0}
+    };
+
+    public EightPuzzleGUI() {
+        setTitle("8-Puzzle Problem");
+        setSize(350, 420);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // -------- TOP BANNER --------
+        JLabel topBanner = new JLabel("8-Puzzle Problem", SwingConstants.CENTER);
+        topBanner.setFont(new Font("Arial", Font.BOLD, 18));
+        topBanner.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        add(topBanner, BorderLayout.NORTH);
+
+        // -------- GRID --------
+        JPanel grid = new JPanel(new GridLayout(3, 3));
+        Font font = new Font("Arial", Font.BOLD, 24);
+
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                int val = state[i][j];
-                if (val != 0) {
-                    int goalX = (val - 1) / 3;
-                    int goalY = (val - 1) % 3;
-                    dist += Math.abs(i - goalX) + Math.abs(j - goalY);
+                JButton btn = new JButton();
+                btn.setFont(font);
+                buttons[i][j] = btn;
+                int r = i, c = j;
+                btn.addActionListener(e -> moveTile(r, c));
+                grid.add(btn);
+            }
+        }
+
+        add(grid, BorderLayout.CENTER);
+
+        // -------- BOTTOM BANNER --------
+        JLabel bottomBanner = new JLabel(
+            "By Siddharth Singh Khati 24BCE7783",
+            SwingConstants.CENTER
+        );
+        bottomBanner.setFont(new Font("Arial", Font.PLAIN, 12));
+        bottomBanner.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        add(bottomBanner, BorderLayout.SOUTH);
+
+        updateGrid();
+        setVisible(true);
+    }
+
+    // -------- MOVE TILE --------
+    private void moveTile(int r, int c) {
+        int[] blank = findBlank();
+        int br = blank[0], bc = blank[1];
+
+        if (Math.abs(br - r) + Math.abs(bc - c) == 1) {
+            state[br][bc] = state[r][c];
+            state[r][c] = 0;
+            updateGrid();
+        }
+    }
+
+    // -------- UPDATE GRID --------
+    private void updateGrid() {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (state[i][j] == 0) {
+                    buttons[i][j].setText("");
+                    buttons[i][j].setBackground(Color.LIGHT_GRAY);
+                } else {
+                    buttons[i][j].setText(String.valueOf(state[i][j]));
+                    buttons[i][j].setBackground(Color.WHITE);
                 }
             }
         }
-        return dist;
+
+        if (Arrays.deepEquals(state, goal)) {
+            JOptionPane.showMessageDialog(this, "🎉 Puzzle Solved!");
+        }
     }
 
-    static List<int[][]> getNeighbors(int[][] state) {
-        List<int[][]> neighbors = new ArrayList<>();
-        int x = 0, y = 0;
-
+    // -------- FIND BLANK --------
+    private int[] findBlank() {
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
-                if (state[i][j] == 0) { x = i; y = j; }
-
-        int[][] moves = {{1,0},{-1,0},{0,1},{0,-1}};
-
-        for (int[] m : moves) {
-            int nx = x + m[0], ny = y + m[1];
-            if (nx >= 0 && ny >= 0 && nx < 3 && ny < 3) {
-                int[][] newState = copy(state);
-                newState[x][y] = newState[nx][ny];
-                newState[nx][ny] = 0;
-                neighbors.add(newState);
-            }
-        }
-        return neighbors;
-    }
-
-    static int[][] copy(int[][] state) {
-        int[][] newState = new int[3][3];
-        for (int i = 0; i < 3; i++)
-            newState[i] = state[i].clone();
-        return newState;
-    }
-
-    static boolean isGoal(int[][] state) {
-        return Arrays.deepEquals(state, goal);
-    }
-
-    static void solve(int[][] start) {
-        PriorityQueue<Node> open = new PriorityQueue<>(Comparator.comparingInt(Node::f));
-        Set<String> closed = new HashSet<>();
-
-        Node startNode = new Node(start, 0, manhattan(start), null);
-        open.add(startNode);
-
-        while (!open.isEmpty()) {
-            Node current = open.poll();
-
-            System.out.println("OPEN → f=" + current.f() +
-                               " g=" + current.g +
-                               " h=" + current.h);
-
-            if (isGoal(current.state)) {
-                printPath(current);
-                return;
-            }
-
-            closed.add(Arrays.deepToString(current.state));
-
-            for (int[][] neighbor : getNeighbors(current.state)) {
-                if (closed.contains(Arrays.deepToString(neighbor)))
-                    continue;
-
-                Node child = new Node(
-                    neighbor,
-                    current.g + 1,
-                    manhattan(neighbor),
-                    current
-                );
-                open.add(child);
-            }
-        }
-    }
-
-    static void printPath(Node node) {
-        Stack<Node> path = new Stack<>();
-        while (node != null) {
-            path.push(node);
-            node = node.parent;
-        }
-
-        System.out.println("\nSolution Path:");
-        while (!path.isEmpty()) {
-            Node n = path.pop();
-            printState(n.state);
-            System.out.println("g=" + n.g + " h=" + n.h + " f=" + n.f());
-            System.out.println();
-        }
-    }
-
-    static void printState(int[][] state) {
-        for (int[] row : state) {
-            for (int val : row)
-                System.out.print(val + " ");
-            System.out.println();
-        }
+                if (state[i][j] == 0)
+                    return new int[]{i, j};
+        return null;
     }
 
     public static void main(String[] args) {
-        int[][] start = {
-            {1,2,3},
-            {4,0,6},
-            {7,5,8}
-        };
-        solve(start);
+        new EightPuzzleGUI();
     }
 }
